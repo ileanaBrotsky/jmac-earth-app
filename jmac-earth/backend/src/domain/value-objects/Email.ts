@@ -19,7 +19,14 @@
 
 /**
  * Value Object que representa un email válido
- * @class
+ * 
+ * @class Email
+ * @example
+ * ```typescript
+ * const email = new Email('user@example.com');
+ * console.log(email.getValue()); // 'user@example.com'
+ * console.log(email.getDomain()); // 'example.com'
+ * ```
  */
 export class Email {
   /**
@@ -27,16 +34,32 @@ export class Email {
    * Acepta formato estándar: usuario@dominio.extension
    * @private
    * @static
-   * @type {RegExp}
+   * @readonly
    */
-  static #EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  private static readonly EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  /**
+   * Longitud mínima permitida para un email
+   * @private
+   * @static
+   * @readonly
+   */
+  private static readonly MIN_LENGTH = 5;
+
+  /**
+   * Longitud máxima permitida para un email
+   * @private
+   * @static
+   * @readonly
+   */
+  private static readonly MAX_LENGTH = 255;
 
   /**
    * Valor del email (privado, inmutable)
    * @private
-   * @type {string}
+   * @readonly
    */
-  #value;
+  private readonly value: string;
 
   /**
    * Crea una instancia de Email
@@ -45,13 +68,15 @@ export class Email {
    * @throws {Error} Si el email es inválido
    * 
    * @example
+   * ```typescript
    * const email = new Email('user@example.com');
-   * console.log(email.getValue()); // 'user@example.com'
+   * const emailUppercase = new Email('USER@EXAMPLE.COM'); // Se normaliza a minúsculas
+   * ```
    */
-  constructor(email) {
-    this.#validate(email);
+  constructor(email: string) {
+    this.validate(email);
     // Normalizar: convertir a minúsculas y eliminar espacios
-    this.#value = email.trim().toLowerCase();
+    this.value = email.trim().toLowerCase();
   }
 
   /**
@@ -61,7 +86,7 @@ export class Email {
    * @param {string} email - Email a validar
    * @throws {Error} Si el email es inválido
    */
-  #validate(email) {
+  private validate(email: string): void {
     // Verificar que no sea null o undefined
     if (!email) {
       throw new Error('Email no puede estar vacío');
@@ -72,21 +97,21 @@ export class Email {
       throw new Error('Email debe ser un string');
     }
 
-    // Eliminar espacios
+    // Eliminar espacios para validación
     const trimmedEmail = email.trim();
 
     // Verificar longitud mínima
-    if (trimmedEmail.length < 5) {
-      throw new Error('Email debe tener al menos 5 caracteres');
+    if (trimmedEmail.length < Email.MIN_LENGTH) {
+      throw new Error(`Email debe tener al menos ${Email.MIN_LENGTH} caracteres`);
     }
 
     // Verificar longitud máxima
-    if (trimmedEmail.length > 255) {
-      throw new Error('Email no puede exceder 255 caracteres');
+    if (trimmedEmail.length > Email.MAX_LENGTH) {
+      throw new Error(`Email no puede exceder ${Email.MAX_LENGTH} caracteres`);
     }
 
     // Verificar formato con regex
-    if (!Email.#EMAIL_REGEX.test(trimmedEmail)) {
+    if (!Email.EMAIL_REGEX.test(trimmedEmail)) {
       throw new Error('Formato de email inválido');
     }
   }
@@ -94,14 +119,16 @@ export class Email {
   /**
    * Obtiene el valor del email
    * 
-   * @returns {string} Email normalizado
+   * @returns {string} Email normalizado (minúsculas, sin espacios)
    * 
    * @example
+   * ```typescript
    * const email = new Email('User@Example.COM  ');
    * console.log(email.getValue()); // 'user@example.com'
+   * ```
    */
-  getValue() {
-    return this.#value;
+  getValue(): string {
+    return this.value;
   }
 
   /**
@@ -112,74 +139,105 @@ export class Email {
    * @returns {boolean} true si son iguales
    * 
    * @example
+   * ```typescript
    * const email1 = new Email('user@example.com');
    * const email2 = new Email('USER@EXAMPLE.COM');
    * console.log(email1.equals(email2)); // true
+   * 
+   * const email3 = new Email('other@example.com');
+   * console.log(email1.equals(email3)); // false
+   * ```
    */
-  equals(other) {
+  equals(other: Email): boolean {
     if (!(other instanceof Email)) {
       return false;
     }
-    return this.#value === other.#value;
+    return this.value === other.value;
   }
 
   /**
    * Obtiene el dominio del email
    * 
-   * @returns {string} Dominio del email
+   * @returns {string} Dominio del email (parte después del @)
    * 
    * @example
+   * ```typescript
    * const email = new Email('user@example.com');
    * console.log(email.getDomain()); // 'example.com'
+   * 
+   * const email2 = new Email('admin@mail.company.org');
+   * console.log(email2.getDomain()); // 'mail.company.org'
+   * ```
    */
-  getDomain() {
-    return this.#value.split('@')[1];
+  getDomain(): string {
+    return this.value.split('@')[1];
   }
 
   /**
    * Obtiene el nombre de usuario del email
    * 
-   * @returns {string} Nombre de usuario
+   * @returns {string} Nombre de usuario (parte antes del @)
    * 
    * @example
-   * const email = new Email('user@example.com');
-   * console.log(email.getUsername()); // 'user'
+   * ```typescript
+   * const email = new Email('user.name@example.com');
+   * console.log(email.getUsername()); // 'user.name'
+   * ```
    */
-  getUsername() {
-    return this.#value.split('@')[0];
+  getUsername(): string {
+    return this.value.split('@')[0];
   }
 
   /**
    * Representación en string del email
    * 
    * @returns {string} Email como string
+   * 
+   * @example
+   * ```typescript
+   * const email = new Email('user@example.com');
+   * console.log(email.toString()); // 'user@example.com'
+   * console.log(`Email: ${email}`); // 'Email: user@example.com'
+   * ```
    */
-  toString() {
-    return this.#value;
+  toString(): string {
+    return this.value;
   }
 
   /**
    * Representación JSON del email
+   * Útil para serialización
    * 
    * @returns {string} Email como string
+   * 
+   * @example
+   * ```typescript
+   * const email = new Email('user@example.com');
+   * console.log(JSON.stringify({ email })); 
+   * // {"email":"user@example.com"}
+   * ```
    */
-  toJSON() {
-    return this.#value;
+  toJSON(): string {
+    return this.value;
   }
 
   /**
    * Valida un email sin crear una instancia
-   * Útil para validaciones previas
+   * Útil para validaciones previas sin lanzar excepciones
    * 
    * @static
    * @param {string} email - Email a validar
    * @returns {boolean} true si el email es válido
    * 
    * @example
+   * ```typescript
    * Email.isValid('user@example.com') // true
    * Email.isValid('invalid-email') // false
+   * Email.isValid('') // false
+   * Email.isValid(null) // false
+   * ```
    */
-  static isValid(email) {
+  static isValid(email: string): boolean {
     try {
       new Email(email);
       return true;
@@ -188,5 +246,3 @@ export class Email {
     }
   }
 }
-
-export default Email;

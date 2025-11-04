@@ -20,13 +20,3 @@ process.env.DB_DATABASE = 'jmac_earth_test';
 
 // Aumentar timeout para tests de integración
 jest.setTimeout(30000);
-
-// Mock de console para tests más limpios (opcional)
-// global.console = {
-//   ...console,
-//   log: jest.fn(),
-//   debug: jest.fn(),
-//   info: jest.fn(),
-//   warn: jest.fn(),
-//   error: jest.fn(),
-// };

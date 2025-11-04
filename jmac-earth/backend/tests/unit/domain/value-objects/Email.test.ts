@@ -4,11 +4,18 @@
  * =============================================================================
  * Tests unitarios para el Value Object Email
  * 
+ * Valida:
+ * - Construcción correcta de emails válidos
+ * - Normalización (lowercase, trim)
+ * - Validaciones (formato, longitud, tipo)
+ * - Métodos de comparación y utilidad
+ * - Inmutabilidad
+ * 
  * @module tests/unit/domain/value-objects/Email.test
  * =============================================================================
  */
 
-import { Email } from '../../../../src/domain/value-objects/Email.js';
+import { Email } from '../../../../src/domain/value-objects/Email';
 
 describe('Email Value Object', () => {
   describe('constructor', () => {
@@ -39,15 +46,15 @@ describe('Email Value Object', () => {
     test('debe lanzar error si el email está vacío', () => {
       // Arrange, Act & Assert
       expect(() => new Email('')).toThrow('Email no puede estar vacío');
-      expect(() => new Email(null)).toThrow('Email no puede estar vacío');
-      expect(() => new Email(undefined)).toThrow('Email no puede estar vacío');
+      expect(() => new Email(null as any)).toThrow('Email no puede estar vacío');
+      expect(() => new Email(undefined as any)).toThrow('Email no puede estar vacío');
     });
 
     test('debe lanzar error si el email no es un string', () => {
       // Arrange, Act & Assert
-      expect(() => new Email(123)).toThrow('Email debe ser un string');
-      expect(() => new Email({})).toThrow('Email debe ser un string');
-      expect(() => new Email([])).toThrow('Email debe ser un string');
+      expect(() => new Email(123 as any)).toThrow('Email debe ser un string');
+      expect(() => new Email({} as any)).toThrow('Email debe ser un string');
+      expect(() => new Email([] as any)).toThrow('Email debe ser un string');
     });
 
     test('debe lanzar error si el email es muy corto', () => {
@@ -69,6 +76,15 @@ describe('Email Value Object', () => {
       expect(() => new Email('@example.com')).toThrow('Formato de email inválido');
       expect(() => new Email('user@')).toThrow('Formato de email inválido');
       expect(() => new Email('user @example.com')).toThrow('Formato de email inválido');
+    });
+
+    test('debe aceptar emails válidos con diferentes formatos', () => {
+      // Arrange & Act & Assert
+      expect(() => new Email('user@example.com')).not.toThrow();
+      expect(() => new Email('user.name@example.com')).not.toThrow();
+      expect(() => new Email('user+tag@example.com')).not.toThrow();
+      expect(() => new Email('user_name@example.co.uk')).not.toThrow();
+      expect(() => new Email('123@example.com')).not.toThrow();
     });
   });
 
@@ -118,9 +134,9 @@ describe('Email Value Object', () => {
       const email = new Email('user@example.com');
 
       // Act & Assert
-      expect(email.equals('user@example.com')).toBe(false);
-      expect(email.equals(null)).toBe(false);
-      expect(email.equals({})).toBe(false);
+      expect(email.equals('user@example.com' as any)).toBe(false);
+      expect(email.equals(null as any)).toBe(false);
+      expect(email.equals({} as any)).toBe(false);
     });
   });
 
@@ -170,6 +186,17 @@ describe('Email Value Object', () => {
       // Assert
       expect(username).toBe('user.name');
     });
+
+    test('debe retornar el nombre de usuario con caracteres especiales', () => {
+      // Arrange
+      const email = new Email('user+tag@example.com');
+
+      // Act
+      const username = email.getUsername();
+
+      // Assert
+      expect(username).toBe('user+tag');
+    });
   });
 
   describe('toString', () => {
@@ -182,6 +209,17 @@ describe('Email Value Object', () => {
 
       // Assert
       expect(str).toBe('user@example.com');
+    });
+
+    test('debe funcionar con template literals', () => {
+      // Arrange
+      const email = new Email('user@example.com');
+
+      // Act
+      const message = `Email: ${email}`;
+
+      // Assert
+      expect(message).toBe('Email: user@example.com');
     });
   });
 
@@ -216,6 +254,7 @@ describe('Email Value Object', () => {
       expect(Email.isValid('user@example.com')).toBe(true);
       expect(Email.isValid('test.user@example.co.uk')).toBe(true);
       expect(Email.isValid('user+tag@example.com')).toBe(true);
+      expect(Email.isValid('USER@EXAMPLE.COM')).toBe(true);
     });
 
     test('debe retornar false para emails inválidos', () => {
@@ -224,25 +263,71 @@ describe('Email Value Object', () => {
       expect(Email.isValid('@example.com')).toBe(false);
       expect(Email.isValid('user@')).toBe(false);
       expect(Email.isValid('')).toBe(false);
-      expect(Email.isValid(null)).toBe(false);
+      expect(Email.isValid(null as any)).toBe(false);
+      expect(Email.isValid(undefined as any)).toBe(false);
     });
   });
 
   describe('inmutabilidad', () => {
-    test('el valor del email no debe poder modificarse', () => {
+    test('el valor del email no debe poder modificarse directamente', () => {
       // Arrange
       const email = new Email('user@example.com');
       const originalValue = email.getValue();
 
-      // Act - intentar modificar (no debería afectar el valor interno)
-      try {
-        email.value = 'hacker@evil.com';
-      } catch (e) {
-        // Esperado - propiedad privada
-      }
+      // Act - intentar modificar (TypeScript debería prevenir esto)
+      // @ts-expect-error - Testing immutability
+      email.value = 'hacker@evil.com';
 
       // Assert
       expect(email.getValue()).toBe(originalValue);
+    });
+
+    test('getValue debe retornar siempre el mismo valor', () => {
+      // Arrange
+      const email = new Email('user@example.com');
+
+      // Act
+      const value1 = email.getValue();
+      const value2 = email.getValue();
+
+      // Assert
+      expect(value1).toBe(value2);
+      expect(value1).toBe('user@example.com');
+    });
+  });
+
+  describe('casos edge', () => {
+    test('debe manejar emails con múltiples puntos en el username', () => {
+      // Arrange & Act
+      const email = new Email('first.middle.last@example.com');
+
+      // Assert
+      expect(email.getValue()).toBe('first.middle.last@example.com');
+      expect(email.getUsername()).toBe('first.middle.last');
+    });
+
+    test('debe manejar emails con números', () => {
+      // Arrange & Act
+      const email = new Email('user123@example123.com');
+
+      // Assert
+      expect(email.getValue()).toBe('user123@example123.com');
+    });
+
+    test('debe manejar subdominios múltiples', () => {
+      // Arrange & Act
+      const email = new Email('user@mail.subdomain.example.com');
+
+      // Assert
+      expect(email.getDomain()).toBe('mail.subdomain.example.com');
+    });
+
+    test('debe manejar correctamente espacios múltiples', () => {
+      // Arrange & Act
+      const email = new Email('   user@example.com   ');
+
+      // Assert
+      expect(email.getValue()).toBe('user@example.com');
     });
   });
 });
