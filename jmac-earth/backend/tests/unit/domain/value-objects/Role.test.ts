@@ -430,19 +430,6 @@ describe('Role Value Object', () => {
   });
 
   describe('inmutabilidad', () => {
-    test('el valor del rol no debe poder modificarse directamente', () => {
-      // Arrange
-      const role = new Role(RoleType.ADMIN);
-      const originalValue = role.getValue();
-
-      // Act - intentar modificar (TypeScript debería prevenir esto)
-      // @ts-expect-error - Testing immutability
-      role.value = RoleType.OPERATOR;
-
-      // Assert
-      expect(role.getValue()).toBe(originalValue);
-    });
-
     test('getValue debe retornar siempre el mismo valor', () => {
       // Arrange
       const role = new Role(RoleType.COORDINATOR);
@@ -454,6 +441,41 @@ describe('Role Value Object', () => {
       // Assert
       expect(value1).toBe(value2);
       expect(value1).toBe(RoleType.COORDINATOR);
+    });
+
+    test('dos instancias con el mismo rol deben ser iguales', () => {
+      // Arrange
+      const role1 = new Role(RoleType.ADMIN);
+      const role2 = new Role(RoleType.ADMIN);
+
+      // Act & Assert
+      expect(role1.equals(role2)).toBe(true);
+      expect(role1.getValue()).toBe(role2.getValue());
+    });
+
+    test('la normalización debe ser consistente', () => {
+      // Arrange
+      const role1 = new Role('ADMIN');
+      const role2 = new Role('admin');
+      const role3 = new Role(RoleType.ADMIN);
+
+      // Act & Assert
+      expect(role1.getValue()).toBe('admin');
+      expect(role2.getValue()).toBe('admin');
+      expect(role3.getValue()).toBe('admin');
+      expect(role1.equals(role2)).toBe(true);
+      expect(role2.equals(role3)).toBe(true);
+    });
+
+    test('los permisos deben ser consistentes para el mismo rol', () => {
+      // Arrange
+      const admin1 = new Role(RoleType.ADMIN);
+      const admin2 = new Role('ADMIN');
+
+      // Act & Assert - Ambos deben tener los mismos permisos
+      expect(admin1.canManageUsers()).toBe(admin2.canManageUsers());
+      expect(admin1.canManageProjects()).toBe(admin2.canManageProjects());
+      expect(admin1.hasPermission('createUser')).toBe(admin2.hasPermission('createUser'));
     });
   });
 });

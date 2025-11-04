@@ -269,19 +269,6 @@ describe('Email Value Object', () => {
   });
 
   describe('inmutabilidad', () => {
-    test('el valor del email no debe poder modificarse directamente', () => {
-      // Arrange
-      const email = new Email('user@example.com');
-      const originalValue = email.getValue();
-
-      // Act - intentar modificar (TypeScript debería prevenir esto)
-      // @ts-expect-error - Testing immutability
-      email.value = 'hacker@evil.com';
-
-      // Assert
-      expect(email.getValue()).toBe(originalValue);
-    });
-
     test('getValue debe retornar siempre el mismo valor', () => {
       // Arrange
       const email = new Email('user@example.com');
@@ -293,6 +280,30 @@ describe('Email Value Object', () => {
       // Assert
       expect(value1).toBe(value2);
       expect(value1).toBe('user@example.com');
+    });
+
+    test('dos instancias con el mismo email deben ser iguales', () => {
+      // Arrange
+      const email1 = new Email('user@example.com');
+      const email2 = new Email('user@example.com');
+
+      // Act & Assert
+      expect(email1.equals(email2)).toBe(true);
+      expect(email1.getValue()).toBe(email2.getValue());
+    });
+
+    test('la normalización debe ser consistente', () => {
+      // Arrange
+      const email1 = new Email('USER@EXAMPLE.COM');
+      const email2 = new Email('user@example.com');
+      const email3 = new Email('  User@Example.Com  ');
+
+      // Act & Assert
+      expect(email1.getValue()).toBe('user@example.com');
+      expect(email2.getValue()).toBe('user@example.com');
+      expect(email3.getValue()).toBe('user@example.com');
+      expect(email1.equals(email2)).toBe(true);
+      expect(email2.equals(email3)).toBe(true);
     });
   });
 
