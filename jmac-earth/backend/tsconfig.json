@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
-    "types": ["jest", "node"], 
+    /* Type Checking */
+    "types": ["jest", "node"],
+    
     /* Language and Environment */
-    "target": "ES2020",
-    "lib": ["ES2020"],
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     
     /* Modules */
     "module": "commonjs",
@@ -27,6 +31,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     
     /* Type Checking */
     "strict": true,
@@ -41,14 +46,11 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
     
     /* Completeness */
-    "skipLibCheck": true,
-    
-    /* Decorators (for TypeORM) */
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "skipLibCheck": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts", "**/*.spec.ts"]
 }

@@ -170,7 +170,15 @@ export class Email {
    * ```
    */
   getDomain(): string {
-    return this.value.split('@')[1];
+    const parts = this.value.split('@');
+    // Como validamos el email en el constructor, sabemos que siempre hay un @
+    // Por lo tanto, parts[1] siempre existirá
+    const domain = parts[1];
+    if (!domain) {
+      // Este caso nunca debería ocurrir debido a la validación en el constructor
+      throw new Error('Email inválido: no se pudo extraer el dominio');
+    }
+    return domain;
   }
 
   /**
@@ -185,7 +193,15 @@ export class Email {
    * ```
    */
   getUsername(): string {
-    return this.value.split('@')[0];
+    const parts = this.value.split('@');
+    // Como validamos el email en el constructor, sabemos que siempre hay un @
+    // Por lo tanto, parts[0] siempre existirá
+    const username = parts[0];
+    if (!username) {
+      // Este caso nunca debería ocurrir debido a la validación en el constructor
+      throw new Error('Email inválido: no se pudo extraer el nombre de usuario');
+    }
+    return username;
   }
 
   /**
