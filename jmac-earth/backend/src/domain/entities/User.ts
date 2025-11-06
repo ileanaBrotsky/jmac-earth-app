@@ -3,7 +3,8 @@
  * 
  * Responsabilidades:
  * - Representar un usuario del sistema
- * - Validar reglas de negocio relacionadas con usuarios
+ * - Validar reglas de negocio relacionadas con usuarios (username, password)
+ * - Delegar validaciones de email y role a sus respectivos Value Objects
  * - Proveer métodos para operaciones de dominio
  * 
  * Nota: Esta es una entidad de dominio PURA.
@@ -11,23 +12,15 @@
  * No conoce sobre bases de datos o HTTP.
  */
 
-/**
- * Enum de roles disponibles en el sistema
- */
-export enum UserRole {
-  ADMIN = 'admin',
-  COORDINATOR = 'coordinator',
-  OPERATOR = 'operator'
-}
+import { Email } from '../value-objects/Email';
+import { Role } from '../value-objects/Role';
+export { RoleType } from '../value-objects/Role';
 
-/**
- * Propiedades para crear un usuario
- */
 export interface CreateUserProps {
   username: string;
-  email: string;
+  email: Email;
   password: string;  // Ya debe venir hasheado desde el caso de uso
-  role: UserRole;
+  role: Role;
 }
 
 /**
@@ -45,16 +38,14 @@ export interface UserProps extends CreateUserProps {
 export class User {
   private readonly _id: string;
   private _username: string;
-  private _email: string;
+  private _email: Email;
   private _password: string;
-  private _role: UserRole;
+  private _role: Role;
   private readonly _createdAt: Date;
   private _updatedAt: Date;
 
   constructor(props: UserProps) {
-    // Validaciones de negocio en el constructor
     this.validateUsername(props.username);
-    this.validateEmail(props.email);
     this.validatePassword(props.password);
     
     this._id = props.id;
@@ -67,7 +58,7 @@ export class User {
   }
 
   /**
-   * Getters - Inmutabilidad
+   * Getters
    */
   get id(): string {
     return this._id;
@@ -77,7 +68,7 @@ export class User {
     return this._username;
   }
 
-  get email(): string {
+  get email(): Email {
     return this._email;
   }
 
@@ -85,7 +76,7 @@ export class User {
     return this._password;
   }
 
-  get role(): UserRole {
+  get role(): Role {
     return this._role;
   }
 
@@ -98,81 +89,51 @@ export class User {
   }
 
   /**
-   * Métodos de negocio
-   */
-
-  /**
-   * Verifica si el usuario es Admin
+   * Métodos de negocio - Verificación de roles
+   * Delegan al Role Value Object
    */
   isAdmin(): boolean {
-    return this._role === UserRole.ADMIN;
+    return this._role.isAdmin();
   }
 
-  /**
-   * Verifica si el usuario es Coordinador
-   */
   isCoordinator(): boolean {
-    return this._role === UserRole.COORDINATOR;
+    return this._role.isCoordinator();
   }
 
-  /**
-   * Verifica si el usuario es Operario
-   */
   isOperator(): boolean {
-    return this._role === UserRole.OPERATOR;
+    return this._role.isOperator();
   }
 
   /**
-   * Verifica si el usuario puede gestionar otros usuarios
-   * Solo Admin puede gestionar usuarios
+   * Métodos de negocio - Verificación de permisos
+   * Delegan al Role Value Object
    */
   canManageUsers(): boolean {
-    return this.isAdmin();
+    return this._role.canManageUsers();
   }
 
-  /**
-   * Verifica si el usuario puede crear proyectos
-   * Admin y Coordinador pueden crear proyectos
-   */
   canCreateProjects(): boolean {
-    return this.isAdmin() || this.isCoordinator();
+    return this._role.canManageProjects();
   }
 
-  /**
-   * Verifica si el usuario puede editar proyectos
-   * Admin y Coordinador pueden editar proyectos
-   */
   canEditProjects(): boolean {
-    return this.isAdmin() || this.isCoordinator();
+    return this._role.canManageProjects();
   }
 
-  /**
-   * Verifica si el usuario puede eliminar proyectos
-   * Admin y Coordinador pueden eliminar proyectos
-   */
   canDeleteProjects(): boolean {
-    return this.isAdmin() || this.isCoordinator();
+    return this._role.canManageProjects();
   }
 
-  /**
-   * Verifica si el usuario puede asignar proyectos a operarios
-   * Admin y Coordinador pueden asignar proyectos
-   */
   canAssignProjects(): boolean {
-    return this.isAdmin() || this.isCoordinator();
+    return this._role.canAssignProjects();
   }
 
-  /**
-   * Verifica si el usuario puede ver todos los proyectos
-   * Admin y Coordinador pueden ver todos los proyectos
-   * Operarios solo ven proyectos asignados
-   */
   canViewAllProjects(): boolean {
-    return this.isAdmin() || this.isCoordinator();
+    return this._role.canViewAllProjects();
   }
 
   /**
-   * Actualiza el username
+   * Métodos de actualización
    */
   updateUsername(newUsername: string): void {
     this.validateUsername(newUsername);
@@ -180,28 +141,18 @@ export class User {
     this._updatedAt = new Date();
   }
 
-  /**
-   * Actualiza el email
-   */
-  updateEmail(newEmail: string): void {
-    this.validateEmail(newEmail);
+  updateEmail(newEmail: Email): void {
     this._email = newEmail;
     this._updatedAt = new Date();
   }
 
-  /**
-   * Actualiza la contraseña (ya debe venir hasheada)
-   */
   updatePassword(newPassword: string): void {
     this.validatePassword(newPassword);
     this._password = newPassword;
     this._updatedAt = new Date();
   }
 
-  /**
-   * Actualiza el rol
-   */
-  updateRole(newRole: UserRole): void {
+  updateRole(newRole: Role): void {
     this._role = newRole;
     this._updatedAt = new Date();
   }
@@ -209,7 +160,6 @@ export class User {
   /**
    * Validaciones privadas
    */
-
   private validateUsername(username: string): void {
     if (!username || username.trim().length === 0) {
       throw new Error('Username no puede estar vacío');
@@ -220,21 +170,9 @@ export class User {
     if (username.length > 50) {
       throw new Error('Username no puede tener más de 50 caracteres');
     }
-    // Validar que solo contenga caracteres alfanuméricos y guiones bajos
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
     if (!usernameRegex.test(username)) {
       throw new Error('Username solo puede contener letras, números y guiones bajos');
-    }
-  }
-
-  private validateEmail(email: string): void {
-    if (!email || email.trim().length === 0) {
-      throw new Error('Email no puede estar vacío');
-    }
-    // Regex básico para email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      throw new Error('Email no es válido');
     }
   }
 
@@ -242,24 +180,27 @@ export class User {
     if (!password || password.trim().length === 0) {
       throw new Error('Password no puede estar vacío');
     }
-    // Nota: La contraseña aquí debería ser el hash, no la contraseña plana
-    // Por lo tanto, la validación de longitud mínima se hace ANTES del hash
-    // Aquí solo validamos que no esté vacía
   }
 
   /**
-   * Convierte la entidad a un objeto plano
-   * Útil para serialización
+   * Convierte la entidad a un objeto plano para serialización
+   * Nota: Password NO se incluye por seguridad
    */
-  toJSON(): object {
+  toJSON(): {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+    createdAt: Date;
+    updatedAt: Date;
+  } {
     return {
       id: this._id,
       username: this._username,
-      email: this._email,
-      role: this._role,
+      email: this._email.getValue(),
+      role: this._role.getValue(),
       createdAt: this._createdAt,
       updatedAt: this._updatedAt
-      // Nota: NO incluimos password por seguridad
     };
   }
 
@@ -269,7 +210,7 @@ export class User {
   static create(props: CreateUserProps): User {
     return new User({
       ...props,
-      id: '', // Se asignará en la base de datos
+      id: '',
       createdAt: new Date(),
       updatedAt: new Date()
     });
