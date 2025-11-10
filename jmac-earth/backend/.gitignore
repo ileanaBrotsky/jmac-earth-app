@@ -11,7 +11,8 @@ build/
 .env
 .env.local
 .env.*.local
-
+# DO NOT ignore .env.example
+!.env.example
 # Logs
 logs/
 *.log
