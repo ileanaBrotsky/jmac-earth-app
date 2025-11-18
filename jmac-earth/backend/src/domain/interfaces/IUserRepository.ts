@@ -99,8 +99,8 @@ export interface IUserRepository {
    * 
    * @example
    * ```typescript
-   * const allUsers = await repository.findAll();
-   * console.log(`Total usuarios: ${allUsers.length}`);
+   * const users = await repository.findAll();
+   * console.log(`Total users: ${users.length}`);
    * ```
    */
   findAll(): Promise<User[]>;
@@ -108,16 +108,16 @@ export interface IUserRepository {
   /**
    * Actualizar un usuario existente
    * 
-   * @param {User} user - Usuario con datos actualizados
+   * @param {User} user - Usuario del dominio con cambios
    * @returns {Promise<User>} Usuario actualizado
    * @throws {Error} Si el usuario no existe
+   * @throws {Error} Si el nuevo email/username ya están tomados
    * 
    * @example
    * ```typescript
-   * const user = await repository.findById(userId);
-   * user.updateEmail(new Email('newemail@example.com'));
-   * 
-   * const updatedUser = await repository.update(user);
+   * const user = await repository.findById('123e4567-e89b-12d3-a456-426614174000');
+   * user.updateUsername('newtusername');
+   * await repository.update(user);
    * ```
    */
   update(user: User): Promise<User>;
@@ -140,11 +140,12 @@ export interface IUserRepository {
    * Verificar si existe un usuario con el email dado
    * 
    * @param {Email} email - Email a verificar
-   * @returns {Promise<boolean>} True si existe, false si no
+   * @returns {Promise<boolean>} true si existe, false si no
    * 
    * @example
    * ```typescript
-   * const exists = await repository.existsByEmail(new Email('test@example.com'));
+   * const email = new Email('john@example.com');
+   * const exists = await repository.existsByEmail(email);
    * if (exists) {
    *   throw new Error('Email ya está en uso');
    * }
@@ -156,7 +157,7 @@ export interface IUserRepository {
    * Verificar si existe un usuario con el username dado
    * 
    * @param {string} username - Username a verificar
-   * @returns {Promise<boolean>} True si existe, false si no
+   * @returns {Promise<boolean>} true si existe, false si no
    * 
    * @example
    * ```typescript

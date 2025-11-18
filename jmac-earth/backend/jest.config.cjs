@@ -2,6 +2,13 @@ module.exports = {
   // Preset para TypeScript
   preset: 'ts-jest',
   testEnvironment: 'node',
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        types: ['jest', 'node']
+      }
+    }
+  },
   
   // Directorios de tests
   roots: ['<rootDir>/tests', '<rootDir>/src'],
