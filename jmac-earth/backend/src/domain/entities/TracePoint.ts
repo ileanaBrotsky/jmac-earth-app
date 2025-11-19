@@ -64,7 +64,7 @@ export class TracePoint {
     this.validateIndex(props.index);
     this.validateDistanceFromStart(props.distanceFromStart_m);
     
-    if (props.segmentDistance_m !== undefined) {
+    if (props.segmentDistance_m !== undefined && props.segmentDistance_m !== null) {
       this.validateSegmentDistance(props.segmentDistance_m);
     }
 
@@ -402,7 +402,12 @@ export class TracePoint {
   /**
    * Validate segment distance is non-negative
    */
-  private validateSegmentDistance(distance: number): void {
+  private validateSegmentDistance(distance: number | undefined | null): void {
+    // null and undefined are allowed (for first point or when not calculated)
+    if (distance === null || distance === undefined) {
+      return;
+    }
+
     if (typeof distance !== 'number' || isNaN(distance)) {
       throw new Error(`Segment distance must be a number, got: ${distance}`);
     }
