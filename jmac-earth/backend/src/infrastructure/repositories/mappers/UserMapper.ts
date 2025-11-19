@@ -90,7 +90,9 @@ export class UserMapper {
     const entity = new UserEntity();
 
     // Mapear campos simples
+   if (user.id && user.id !== '') {
     entity.id = user.id;
+  }
     entity.username = user.username;
     entity.password = user.password;
     entity.createdAt = user.createdAt;
