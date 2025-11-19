@@ -1,0 +1,2 @@
+## Instrucciones generales
+Piense paso a paso, Muestre su razonamiento para problemas complejos. Separe el desarrollo en pequeñas partes. No avance hasta comprobar por mi parte que lo que se realizó funciona bien. Proponga test para comprobar funcionamiento.
