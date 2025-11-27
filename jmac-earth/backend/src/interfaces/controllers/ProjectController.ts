@@ -83,17 +83,44 @@ export class ProjectController {
 
       const result = await this.processKMZUseCase.execute(req.file.buffer, payload);
 
+      // Normalize calculation points to use lat/lon property names
+      const normalizedPoints = result.calculation.points.map(point => ({
+        ...point,
+        lat: point.latitude,
+        lon: point.longitude
+      }));
+
+      const normalizedPumps = result.calculation.pumps.map(pump => ({
+        ...pump,
+        lat: pump.latitude,
+        lon: pump.longitude
+      }));
+
+      const normalizedValves = result.calculation.valves.map(valve => ({
+        ...valve,
+        lat: valve.latitude,
+        lon: valve.longitude
+      }));
+
+      // Build the response with complete calculation data
+      const calculationData = {
+        trace: {
+          points: normalizedPoints,
+          totalDistance_m: result.calculation.summary.totalDistance_km * 1000,
+          pointCount: normalizedPoints.length
+        },
+        pumps: normalizedPumps,
+        valves: normalizedValves,
+        alarms: result.calculation.alarms,
+        warnings: result.calculation.warnings,
+        summary: result.calculation.summary
+      };
+
       res.status(HTTP_STATUS.CREATED).json({
         success: true,
         data: {
           project: result.project.toObject(),
-          calculation: {
-            pumps: result.calculation.pumps,
-            valves: result.calculation.valves,
-            alarms: result.calculation.alarms,
-            warnings: result.calculation.warnings,
-            summary: result.calculation.summary
-          }
+          calculation: calculationData
         }
       });
     } catch (error) {

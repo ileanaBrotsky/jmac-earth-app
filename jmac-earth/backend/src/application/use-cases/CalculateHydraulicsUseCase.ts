@@ -1,4 +1,4 @@
-import { HydraulicCalculator, CalculationResult } from '@domain/services/HydraulicCalculator';
+import { HydraulicCalculator, CalculationResult, ElevationOrigin } from '@domain/services/HydraulicCalculator';
 import { KMZParserService } from '@infrastructure/services/kmz/KMZParserService';
 import { ElevationServiceFactory } from '@infrastructure/services/elevation/ElevationServiceFactory';
 import { HydraulicParameters } from '@domain/value-objects/HydraulicParameters';
@@ -106,7 +106,14 @@ export class CalculateHydraulicsUseCase {
     // 5. Ejecutar cálculo hidráulico
     try {
       const result = HydraulicCalculator.calculate(tracePoints, params);
-      return result;
+      const elevationSource: ElevationOrigin = parseResult.hasElevations ? 'kmz' : 'api';
+
+      return {
+        ...result,
+        tracePoints,
+        elevationSource,
+        metadata: parseResult.metadata
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Error desconocido';
       throw new Error(`CalculateHydraulicsUseCase: Error en cálculo hidráulico: ${message}`);
