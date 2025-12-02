@@ -210,6 +210,24 @@ npm run dev
 # Servidor corriendo en: http://localhost:3000
 ```
 
+## 🧭 Frontend
+
+La carpeta `../frontend` contiene la SPA de React que consume `/api/v1/projects`. Consulta `frontend/README.md` para conocer:
+
+- cómo configurar la variable `VITE_API_URL` (por defecto `http://localhost:3000/api/v1`)
+- qué scripts están disponibles (`dev`, `build`, `test`)
+- la necesidad de contar con Node.js 20.19+ (Vite y Vitest no arrancan en versiones anteriores).
+
+Para levantar el frontend contra este backend:
+
+```bash
+cd ../frontend
+npm install
+npm run dev
+```
+
+El frontend comparte la misma base de datos en dev (puede usar la API de Docker). Asegúrate de tener el backend iniciado antes de subir un KMZ.
+
 ---
 
 ## 📦 Scripts Disponibles
@@ -839,3 +857,9 @@ Para soporte o preguntas:
 
 **Última actualización:** Noviembre 2025  
 **Versión del README:** 2.0
+
+## API para frontend
+
+- Endpoints de la SPA (POST/GET `/api/v1/projects`) documentados en `backend/API.md`.
+- Configura `VITE_API_URL` en el frontend para apuntar a este backend (ej: `http://localhost:3000/api/v1`).
+- Las respuestas pueden venir como `data.calculation` o `calculation` en la raiz; el frontend soporta ambos.

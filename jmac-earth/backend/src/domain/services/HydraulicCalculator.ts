@@ -10,6 +10,12 @@ export interface HydraulicWarning {
   context?: Record<string, any>;
 }
 
+export interface KMZMetadata {
+  name?: string;
+  description?: string;
+  timestamp?: Date;
+}
+
 export interface CalculationPointResult {
   index: number;
   distance_m: number;
@@ -23,6 +29,8 @@ export interface CalculationPointResult {
   P: number; // combined pressure (kg/cm2)
 }
 
+export type ElevationOrigin = 'kmz' | 'api';
+
 export interface CalculationResult {
   points: CalculationPointResult[];
   pumps: CalculationPointResult[];
@@ -35,6 +43,9 @@ export interface CalculationResult {
     totalPumps: number;
     totalValves: number;
   };
+  tracePoints?: TracePoint[];
+  elevationSource?: ElevationOrigin;
+  metadata?: KMZMetadata;
 }
 
 /**
