@@ -1,43 +1,59 @@
 # Frontend · JMAC Earth
 
-SPA built with Vite + React + TypeScript that lets Coordinators upload KMZ traces, enter hydraulic parameters and visualize the calculated pumps/valves on a Leaflet map.
+SPA en React/TypeScript (Vite) que permite subir trazas KMZ, ingresar parámetros hidráulicos y visualizar bombas/válvulas sobre Leaflet. Esta guía cubre instalación, variables de entorno y comandos básicos.
 
-## Setup
+## Requisitos
+
+- Node.js 20.19+ (o 22.12+). Vite/Vitest no arrancan en versiones anteriores.
+- npm 10+.
+
+## Instalación
 
 ```bash
 cd frontend
 npm install
+cp .env.example .env
 ```
 
-> **Node.js requirement:** Vite 7 requires Node.js 20.19+ or 22.12+. If you are running this project on an older Node version, the dev/build/test scripts will fail at startup.
+Edita `.env` para apuntar al backend:
 
-## Environment
-
-Copy `.env.example` to `.env` (not committed) and adjust:
-
-```env
+```
 VITE_API_URL=http://localhost:3000/api/v1
 ```
 
-The frontend relies on the backend API being available at `VITE_API_URL`. You can run the backend with `npm run dev` from the `backend/` folder (see `backend/README.md` for details).
+## Scripts disponibles
 
-## Available Scripts
+- `npm run dev` – Servidor de desarrollo con HMR (puerto 5173).
+- `npm run build` – Type-check + bundle de producción.
+- `npm run preview` – Previsualiza el build.
+- `npm run test` – Vitest en jsdom (usa setup en `src/tests/setup.ts`).
+- `npm run lint` – ESLint.
 
-- `npm run dev` – Launch the Vite dev server with HMR (port 5173 by default).
-- `npm run build` – Type-check and bundle for production.
-- `npm run test` – Run the Vitest suites (Note: Node.js must satisfy the same minimum version as Vite).
-- `npm run lint` – Run ESLint over the source tree.
-- `npm run preview` – Preview the production build via `vite preview`.
+## Flujo de trabajo
+
+1. Backend: `cd backend && npm install && npm run dev` (o `npm run docker:up` si usas la BD Docker).
+2. Frontend: `cd frontend && npm run dev`.
+3. Sube un `.kmz`, completa parámetros y ejecuta “Calcular posiciones”.
+4. Revisa mapa/summary y el histórico en “Proyectos guardados”.
+
+## Qué expone la UI
+
+- **KMZUploader**: drag & drop, validación de extensión y tamaño, muestra progreso mientras se envía.
+- **ParametersForm**: validaciones con Zod/React Hook Form.
+- **Feedback de parámetros**: conversión m³/h → BPM, BPM por línea y coeficiente K interpolado.
+- **TraceSummary/TraceMap**: resumen y mapa Leaflet con bombas/válvulas.
+- **ProjectList**: consume `GET /projects` para listar proyectos guardados.
 
 ## Testing
 
-- `KMZUploader` and `ParametersForm` have unit tests under `src/components/project/__tests__`.
-- Tests run via Vitest in a `jsdom` environment; they are executed automatically via `npm run test`.
+- Unit: componentes en `src/components/project/__tests__` (RTL + Vitest).
+- Ejecuta `npm run test`. Si hay problemas de `crypto`, el polyfill está en `src/tests/setup.ts`.
 
-## Development Flow
+## Integración con backend
 
-1. Start the backend: `cd backend && npm run dev` (needs Node 18+ and the PostgreSQL Docker stack described in `backend/README.md`).
-2. Start the frontend: `cd frontend && npm run dev`.
-3. Upload a `.kmz` file, fill in parameters, and trigger “Calcular posiciones”.
-4. The map and summary panel show the calculated trace, pump/valve counts, and alarms returned by `/api/v1/projects`.
+- API documentada en `backend/API.md` (POST/GET `/api/v1/projects`).
+- El cliente HTTP está en `src/services/api.ts` con detección automática de `multipart/form-data` para `FormData`.
 
+## Notas de estilo
+
+Tailwind no es obligatorio; el proyecto usa CSS global ligero (`src/index.css`). Puedes migrar a Tailwind si el equipo lo requiere.

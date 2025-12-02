@@ -73,3 +73,8 @@ export interface ProcessProjectResponse {
   project?: ProjectSummary;
   calculation?: CalculationResponse;
 }
+
+export interface ProjectsListResponse {
+  data?: ProjectSummary[];
+  projects?: ProjectSummary[];
+}

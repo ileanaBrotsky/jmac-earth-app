@@ -4,11 +4,15 @@ interface KMZUploaderProps {
   file?: File | null;
   error?: string;
   onFileChange: (file: File | null) => void;
+  uploading?: boolean;
+  maxSizeMB?: number;
 }
 
-const KMZUploader = ({ file, onFileChange, error }: KMZUploaderProps) => {
+const KMZUploader = ({ file, onFileChange, error, uploading = false, maxSizeMB = 20 }: KMZUploaderProps) => {
   const [dragging, setDragging] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const maxBytes = maxSizeMB * 1024 * 1024;
 
   const handleDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
@@ -18,12 +22,19 @@ const KMZUploader = ({ file, onFileChange, error }: KMZUploaderProps) => {
       if (dropped) {
         if (!dropped.name.toLowerCase().endsWith('.kmz')) {
           onFileChange(null);
+          setLocalError('El archivo debe tener extensi\u00f3n .kmz');
           return;
         }
+        if (dropped.size > maxBytes) {
+          onFileChange(null);
+          setLocalError(`El archivo supera el l\u00edmite de ${maxSizeMB} MB`);
+          return;
+        }
+        setLocalError(null);
         onFileChange(dropped);
       }
     },
-    [onFileChange]
+    [onFileChange, maxBytes, maxSizeMB]
   );
 
   const handleClick = () => {
@@ -38,8 +49,15 @@ const KMZUploader = ({ file, onFileChange, error }: KMZUploaderProps) => {
     }
     if (!selected.name.toLowerCase().endsWith('.kmz')) {
       onFileChange(null);
+      setLocalError('El archivo debe tener extensi\u00f3n .kmz');
       return;
     }
+    if (selected.size > maxBytes) {
+      onFileChange(null);
+      setLocalError(`El archivo supera el l\u00edmite de ${maxSizeMB} MB`);
+      return;
+    }
+    setLocalError(null);
     onFileChange(selected);
   };
 
@@ -67,14 +85,22 @@ const KMZUploader = ({ file, onFileChange, error }: KMZUploaderProps) => {
         onChange={handleChange}
       />
       <p style={{ margin: 0, fontWeight: 600 }}>Arrastra tu KMZ o haz clic para cargar</p>
-      <small className="helper-text">El archivo debe ser generado por Google Earth.</small>
+      <small className="helper-text">
+        El archivo debe ser generado por Google Earth. Tama\u00f1o m\u00e1ximo: {maxSizeMB} MB.
+      </small>
       {file && (
         <div className="status-row">
           <span>Archivo listo:</span>
           <span>{file.name}</span>
         </div>
       )}
-      {error && <p className="error-text">{error}</p>}
+      {uploading && (
+        <div className="status-row">
+          <span>Subiendo...</span>
+          <span className="helper-text">Enviando archivo y par\u00e1metros al backend.</span>
+        </div>
+      )}
+      {(error || localError) && <p className="error-text">{error ?? localError}</p>}
     </div>
   );
 };

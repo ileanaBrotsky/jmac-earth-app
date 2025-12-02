@@ -857,3 +857,9 @@ Para soporte o preguntas:
 
 **Última actualización:** Noviembre 2025  
 **Versión del README:** 2.0
+
+## API para frontend
+
+- Endpoints de la SPA (POST/GET `/api/v1/projects`) documentados en `backend/API.md`.
+- Configura `VITE_API_URL` en el frontend para apuntar a este backend (ej: `http://localhost:3000/api/v1`).
+- Las respuestas pueden venir como `data.calculation` o `calculation` en la raiz; el frontend soporta ambos.

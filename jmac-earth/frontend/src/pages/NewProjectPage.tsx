@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -6,8 +6,10 @@ import KMZUploader from '@components/project/KMZUploader';
 import ParametersForm from '@components/project/ParametersForm';
 import TraceSummary from '@components/project/TraceSummary';
 import TraceMap from '@components/project/TraceMap';
-import { useProjectCreation } from '@hooks/useProject';
+import ProjectList from '@components/project/ProjectList';
+import { useProjectCreation, useProjectsList } from '@hooks/useProject';
 import type { ProjectFormValues } from '@app/types/forms';
+import { interpolateCoefficient } from '../data/frictionCoefficients';
 
 const calculationSchema = z.object({
   name: z.string().min(3, 'Nombre requerido'),
@@ -24,6 +26,7 @@ export const NewProjectPage = () => {
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const mutation = useProjectCreation();
+  const projectsQuery = useProjectsList();
 
   const {
     register,
@@ -51,6 +54,10 @@ export const NewProjectPage = () => {
 
   const bpmTotal = useMemo(() => watchFlowRate * 0.1048, [watchFlowRate]);
   const bpmPerLine = useMemo(() => (watchLines > 0 ? bpmTotal / watchLines : bpmTotal), [bpmTotal, watchLines]);
+  const coefficientResult = useMemo(
+    () => interpolateCoefficient(watchDiameter, bpmPerLine),
+    [watchDiameter, bpmPerLine]
+  );
 
   const onSubmit = (values: ProjectFormValues) => {
     if (!file) {
@@ -75,14 +82,26 @@ export const NewProjectPage = () => {
   };
 
   const result = mutation.data;
-  
+
+  useEffect(() => {
+    if (mutation.isSuccess) {
+      projectsQuery.refetch();
+    }
+  }, [mutation.isSuccess, projectsQuery]);
+
   // Handle the response structure properly (could be data.calculation or calculation directly)
   const calculationData = result?.data?.calculation || result?.calculation;
 
   return (
     <div className="layout-grid">
       <div>
-        <KMZUploader file={file} error={fileError ?? undefined} onFileChange={(value) => setFile(value)} />
+        <KMZUploader
+          file={file}
+          error={fileError ?? undefined}
+          onFileChange={(value) => setFile(value)}
+          uploading={mutation.isPending}
+          maxSizeMB={20}
+        />
         <div style={{ height: '1rem' }} />
         <ParametersForm register={register} errors={errors} />
         <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -102,6 +121,22 @@ export const NewProjectPage = () => {
           >
             {mutation.isPending ? 'Calculando...' : 'Calcular posiciones'}
           </button>
+        </div>
+        <div className="panel-card" style={{ marginTop: '1rem' }}>
+          <p className="panel-heading">Feedback de parámetros</p>
+          <ul style={{ paddingLeft: '1.1rem', margin: 0, color: '#0f172a' }}>
+            <li>Caudal total: {bpmTotal.toFixed(2)} BPM ({watchFlowRate.toFixed(1)} m³/h)</li>
+            <li>Caudal por línea: {bpmPerLine.toFixed(2)} BPM con {watchLines} línea(s)</li>
+            <li>
+              Coeficiente K (interpolado):{' '}
+              {coefficientResult.coefficient ? coefficientResult.coefficient : 'fuera de rango'}
+            </li>
+          </ul>
+          {coefficientResult.message && (
+            <p className="error-text" style={{ marginTop: '0.5rem' }}>
+              {coefficientResult.message}
+            </p>
+          )}
         </div>
         {mutation.isError && (
           <p className="error-text" style={{ marginTop: '0.75rem' }}>
@@ -136,6 +171,13 @@ export const NewProjectPage = () => {
             <p className="helper-text">Sube un KMZ válido y completa los parámetros.</p>
           </div>
         )}
+        <div style={{ height: '1rem' }} />
+        <ProjectList
+          projects={projectsQuery.data ?? []}
+          isLoading={projectsQuery.isLoading || projectsQuery.isFetching}
+          error={projectsQuery.error ? 'No se pudo cargar la lista de proyectos' : null}
+          onRefresh={() => projectsQuery.refetch()}
+        />
       </div>
     </div>
   );

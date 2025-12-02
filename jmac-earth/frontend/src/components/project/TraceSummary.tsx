@@ -32,6 +32,14 @@ const TraceSummary = ({ calculation }: TraceSummaryProps) => {
         <span className="chip">Bombas: {pumps.length}</span>
         <span className="chip">Válvulas: {valves.length}</span>
       </div>
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+        <button className="button secondary" type="button" disabled title="Próximo sprint">
+          Exportar PDF (pronto)
+        </button>
+        <button className="button secondary" type="button" disabled title="Próximo sprint">
+          Exportar KMZ (pronto)
+        </button>
+      </div>
     </div>
   );
 };
